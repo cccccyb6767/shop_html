@@ -100,6 +100,14 @@
                 this.start = start;
                 this.queryData(start);
             },
+            deleteBrand:function (id) {
+                this.$ajax.delete("http://localhost:8082/api/attr/delAttribute?id="+id).then(function () {
+                     confirm("确定删除吗?");
+                    history.go(0);
+                }).catch(function () {
+                })
+
+            },
             queryData:function(){
                 var athis = this;
                 console.log(athis);

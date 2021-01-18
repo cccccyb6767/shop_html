@@ -46,9 +46,11 @@
         </el-table-column>
 
 
-        <el-table-column label="品牌LOGO" width="100">
-          <template scope="scope">
-            <img :src="scope.row.imgPath" width="80" height="80" class="photo"/>
+        <el-table-column
+          prop="imgPath"
+          label="品牌logo">
+          <template slot-scope="scope">
+            <img height="60px" :src="scope.row.imgPath"/>
           </template>
         </el-table-column>
 
@@ -103,7 +105,7 @@
         </el-form-item>
 
         <el-form-item label="首字母" prop="bandE">
-          <el-input v-model="addBrandForm.brandE"></el-input>
+          <el-input v-model="addBrandForm.bandE"></el-input>
         </el-form-item>
 
 
@@ -112,15 +114,16 @@
             class="upload-demo"
             action="http://192.168.1.178:8082/api/uploadFile/imgPath"
             :on-success="imgCallBack"
-            name="file"
+            :before-upload="beforeAvatarUpload"
+            name="photo"
             list-type="picture">
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">不超过500kb</div>
+            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>
 
         <el-form-item label="描述信息" prop="bandDesc">
-          <el-input type="textarea" v-model="addBrandForm.brandDesc"></el-input>
+          <el-input type="textarea" v-model="addBrandForm.bandDesc"></el-input>
         </el-form-item>
 
         <el-form-item label="暗箱排序" prop="ord">
@@ -160,25 +163,26 @@
 
 
         <el-form-item label="首字母" prop="bandE">
-          <el-input v-model="updateBrandForm.brandE"></el-input>
+          <el-input v-model="updateBrandForm.bandE"></el-input>
         </el-form-item>
 
 
-        <el-form-item label="imgpath">
+        <el-form-item label="logo">
           <el-upload
             class="upload-demo"
             action="http://192.168.1.178:8082/api/uploadFile/imgPath"
             :on-success="imgCallBack"
-            name="file"
+            :before-upload="beforeAvatarUpload"
+            name="photo"
             list-type="picture">
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">不超过500kb</div>
+            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
 
           </el-upload>
         </el-form-item>
 
         <el-form-item label="描述信息" prop="bandDesc">
-          <el-input type="textarea" v-model="updateBrandForm.brandDesc"></el-input>
+          <el-input type="textarea" v-model="updateBrandForm.bandDesc"></el-input>
         </el-form-item>
 
         <el-form-item label="暗箱排序" prop="ord">
@@ -209,9 +213,10 @@
         name: "brand",
         data(){
       return{
+          imageUrl:"",
           brandData:[],
           searchForm:{
-              name:"",
+              name:""
           },
           updateFormFlag:false,
           updateBrandForm:{
@@ -226,28 +231,41 @@
           addFormFlag:false,
           addBrandForm:{
               name:"",
-              brandE:"",
+              bandE:"",
               imgPath:"",
-              brandDesc:"",
+              bandDesc:"",
               ord:"",
               isDel:"0",
           },
+          size:2,
+          start:1,
           count:0,
-          sizes:[2,3,5,10],
-          size:4,
-          start:1
+          sizes:[2,4,15]
       }
         },methods:{
+            beforeAvatarUpload(file) {
+                //限制类型    name  来限制
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 4;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
             getDetails(row){
                 //alert(row)
                 var athis = this;
                 athis.updateBrandForm.id=row.id;
                 athis.updateBrandForm.name=row.name;
-                athis.updateBrandForm.brandE=row.brandE;
-                athis.updateBrandForm.brandDesc=row.brandDesc;
+                athis.updateBrandForm.bandE=row.bandE;
+                athis.updateBrandForm.bandDesc=row.bandDesc;
                 athis.updateBrandForm.ord=row.ord;
                 athis.updateBrandForm.author=row.author;
-                athis.updateBrandForm.imgPath=row.imgpath;
+                athis.updateBrandForm.imgPath=row.imgPath;
                 console.log(row)//此时就能拿到整行的信息
             },
             updateForm:function (rs) {
@@ -262,8 +280,7 @@
               var athis = this;
               console.log(athis);
                 //参数格式化
-                var searchStr=this.$qs.stringify(this.searchForm);
-                console.log(searchStr);
+                var searchStr=athis.$qs.stringify(athis.searchForm);
                 this.$ajax.get("http://192.168.1.178:8082/api/brand/queryBrand?size="+athis.size+"&start="+athis.start+"&"+searchStr).then(res=>{
                     console.log(res);
                     this.brandData=res.data.data.data;
@@ -282,7 +299,8 @@
             },imgCallBack:function(response, file, fileList){ //图片上传的回调函数
                 // 赋值
                 console.log(response);
-                this.addBrandForm.imgPath=response.url;
+                this.addBrandForm.imgPath=response.data;
+                this.updateBrandForm.imgPath=response.data;
             },
             deleteBrand:function (id) {
                 this.$ajax.delete("http://localhost:8082/api/brand/delBrand?id="+id).then(function () {
@@ -292,16 +310,16 @@
 
             },
             handleSizeChange:function(size){ //跳转页面
-                this.searchForm.size=size;
+                this.size=size;
                 this.queryData(size);
             },
             handleCurrentChange:function(start){
                 console.log(start);
-                this.searchForm.start = start;
+                this.start = start;
                 this.queryData(start);
             }
         },created:function() {
-            this.queryData(1,4);
+            this.queryData();
         }
     }
 </script>

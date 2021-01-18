@@ -15,7 +15,7 @@
         <span>
 
     <el-button @click="updateFormShowFlag=true"  type="text" icon="el-icon-edit">修改</el-button>
-      <el-button @click="deleteType()" type="text" icon="el-icon-delete">删除</el-button>
+      <el-button @click="deleteType(data.id)" type="text" icon="el-icon-delete">删除</el-button>
         </span>
       </span>
     </el-tree>
@@ -106,10 +106,17 @@
                 console.log(data);
                 athis.form = data;
                 athis.form.pid = data.id;
-
-
                 athis.updateForm = data;
                 athis.updateForm.name = data.label;
+            },
+            deleteType:function (id) {
+                console.log(id);
+                this.$ajax.delete("http://localhost:8082/api/type/delType?id="+id).then(function () {
+                    history.go(0);
+                    alert("删除成功哦");
+                }).catch(function () {
+                })
+
             },
             chandleData: function () {
                 for (let i = 0; i < this.ajaxData.length; i++) {

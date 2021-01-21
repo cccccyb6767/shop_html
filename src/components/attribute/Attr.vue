@@ -115,10 +115,26 @@
             </el-radio-group>
           </el-form-item>
 
+
           <el-form-item label="是否SKU">
-            <el-switch v-model="updateForm.isSKUb"></el-switch>
+            <el-radio-group v-model="updateForm.isSKU">
+              <el-radio :label="0">否</el-radio>
+              <el-radio :label="1">是</el-radio>
+            </el-radio-group>
           </el-form-item>
+
+
+          <el-form-item label="是否删除">
+            <el-radio-group v-model="updateForm.isDel">
+              <el-radio :label="0">不删除</el-radio>
+              <el-radio :label="1">删除</el-radio>
+            </el-radio-group>
+          </el-form-item>
+
+
         </el-form>
+
+
 
 
         <div slot="footer" class="dialog-footer">
@@ -161,8 +177,12 @@
           </el-form-item>
 
           <el-form-item label="是否SKU">
-            <el-switch v-model="form.isSKUb"></el-switch>
+            <el-radio-group v-model="form.isSKU">
+              <el-radio :label="0">否</el-radio>
+              <el-radio :label="1">是</el-radio>
+            </el-radio-group>
           </el-form-item>
+
         </el-form>
 
 
@@ -188,7 +208,7 @@
 
         <el-button type="text" icon="el-icon-plus" circle @click="showValueFrom">增加</el-button>
 
-        <el-table :data="gridData"  v-if="!ShowValueFormTable">
+        <el-table :data="gridData"  v-if="!ShowValueFormTable"  @row-click="getDetailss">
           <el-table-column property="id" label="序号" width="150"></el-table-column>
           <el-table-column property="name" label="属性值" width="150"></el-table-column>
           <el-table-column property="nameCH" label="属性中文" width="200"></el-table-column>
@@ -197,7 +217,8 @@
             label="操作"
             width="170">
             <template slot-scope="scope">
-              <el-button @click="() => updateFormFlag1=true" type="text" size="small">修改</el-button>
+              <el-button @click=" updateFormFlag1=true" type="text" size="small">修改</el-button>
+              <el-button @click="deleteValue(scope.row.id)" type="text" size="small">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -233,15 +254,33 @@
             <el-button @click="ShowValueFormTable=false">取消</el-button>
           </el-form-item>
         </el-form>
-
-
-
-
-
-
       </el-dialog>
 
 
+
+      <el-dialog title="修改属性值" :visible.sync="updateFormFlag1">
+
+        <el-form :model="updatevalueform" ref="updatevalueForm"  label-width="80px">
+
+          <el-form-item label="属性值" prop="name">
+            <el-input v-model="updatevalueform.name"></el-input>
+          </el-form-item>
+
+          <el-form-item label="中文名称"  prop="nameCH">
+            <el-input v-model="updatevalueform.nameCH"></el-input>
+          </el-form-item>
+
+          <el-form-item  v-if="condition"  label="attrId"  prop="attrId">
+            <el-input  v-model="updatevalueform.attrId"></el-input>
+          </el-form-item>
+
+
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="updateFormFlag1 = false">取 消</el-button>
+          <el-button type="primary" @click="updateAttrValueForm">确 定</el-button>
+        </div>
+      </el-dialog>
 
 
 
@@ -273,12 +312,14 @@
                     typeId:-1
                 },
                 updateFormFlag:false,
+                updateFormFlag1:false,
                 updateForm:{
+                    isDel:"",
                     typeId:"",
                     name:"",
                     nameCH:"",
                     type:"",
-                    isSKUb:"",
+                    isSKU:"",
                 },
                 types:[],
 
@@ -294,11 +335,19 @@
                 starts:1,
 
                 ShowValueFormTable:false,
+                ShowValueFormTable1:false,
                 addvalueform:{
                     name:"",
                     attrId:"",
                     nameCH:"",
                     attId:""
+                },
+                updatevalueform:{
+                    name:"",
+                    attrId:"",
+                    nameCH:"",
+                    attId:""
+
                 },
                 typeName:"",
                 ajaxTypeData:[],
@@ -317,6 +366,12 @@
         },
         methods:{
 
+            deleteValue:function (id) {
+                this.$ajax.delete("http://localhost:8082/api/attrValue/delAttributeValue?id="+id).then(function () {
+                    history.go(0);
+                }).catch(function () {
+                })
+            },
             formaterTypeData:function(){
                 this.$ajax.get("http://localhost:8082/api/type/getData").then(res=>{
                     // [{id:1,"name":"",pid:2},{}]
@@ -365,32 +420,45 @@
                 }
             },
 
+            getDetailss(row){
+                var athis = this;
+                athis.updatevalueform.attrId=row.attId;
+                athis.updatevalueform.id=row.id;
+
+                athis.updatevalueform.name=row.name;
+                athis.updatevalueform.nameCH=row.nameCH;
+            },
+            updateAttrValueForm:function(){
+                var athis = this;
+                athis.updatevalueform.attId=  athis.updateForm.id
+                this.$ajax.post("http://localhost:8082/api/attrValue/updateAttrVue",this.$qs.stringify(this.updatevalueform)).then(res=>{
+                    this.updateFormFlag1=false;
+                    a.queryData(1);
+                }).catch(err=>console.log(err))
+        },
             getDetails(row){
                 //alert(row)
-
                 var athis = this;
                 athis.updateForm.id=row.id;
-                console.log(athis.updateForm.id);
                 athis.updateForm.typeId=row.typeId;
-                console.log(row.typeId);
-                console.log(athis.updateForm.typeId);
                 athis.updateForm.name=row.name;
                 athis.updateForm.nameCH=row.nameCH;
                 athis.updateForm.type=row.type;
-                athis.updateForm.isSKUb=row.isSKUb.checked;
+                athis.updateForm.isSKU=row.isSKU;
+                console.log( athis.updateForm.isSKU);
+                athis.updateForm.isDel = row.isDel;
+                console.log( athis.updateForm.isDel);
             },
             update:function (rs) {
                 console.log("ssss"+rs);
-                this.updateForm.isSKU=this.updateForm.isSKUb?1:0;
                 var a =this;
-                this.$ajax.post("http://localhost:8082/api/attr/updateAttr ",this.$qs.stringify(this.updateBrandForm)).then(res=>{
+                this.$ajax.post("http://localhost:8082/api/attr/updateAttr ",this.$qs.stringify(this.updateForm)).then(res=>{
                     this.updateFormFlag=false;
                     a.queryData(1);
                 }).catch(err=>console.log(err))
             },
             add:function(){
                 //处理一下
-                this.form.isSKU=this.form.isSKUb?1:0;
                 this.$ajax.post("http://localhost:8082/api/attr/addAttribute",this.$qs.stringify(this.form)).then(res=>{
                     this.dialogFormVisible=false;
                 })
@@ -452,6 +520,10 @@
                 this.ShowValueFormTable=true
 
                 this.addvalueform.conditioin=false;
+
+            },
+            updateFormFlag1:function(){
+                this.updatevalueform.conditioin=false;
             },
             handleSizeChanges:function(sizez){ //跳转页面
                 this.sizez=sizez;
@@ -474,6 +546,7 @@
                     this.counts=res.data.data.count;
                 }).catch(err=>console.log(err));
             },
+
             addValue:function(){
 
                 var athis = this;

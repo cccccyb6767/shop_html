@@ -38,7 +38,12 @@ export default new Router({
               path: '/Attr',
               component: () => import(/* webpackChunkName: "dashboard" */ '../components/attribute/Attr.vue'),
               meta: { title: '属性管理' }
-            }
+            },
+            {
+              path: '/addProduct',
+              component: () => import(/* webpackChunkName: "dashboard" */ '../components/addProduct/AddProduct.vue'),
+              meta: { title: '商品管理' }
+            },
 
           ]
         }

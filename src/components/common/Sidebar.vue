@@ -77,7 +77,10 @@ export default {
                     {
                         index: 'Attr',
                         title: '属性管理'
-                    }]
+                    },{
+                        index: 'addProduct',
+                        title: '商品管理'
+                    },]
               },
                 {
                     icon: 'el-icon-document-copy',
